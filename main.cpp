@@ -17,12 +17,8 @@ int main(int argc, char** argv)
 		return 0;
 	}
 	else{
-		double time1 = time(NULL);
 		process pr;
-		//std::cout << argc << std::endl;
 		pr.trimmer( argv );
-		double time2 = time(NULL);
-		std::cout << time2 - time1 << std::endl;
 		return 0;
 
 	}
