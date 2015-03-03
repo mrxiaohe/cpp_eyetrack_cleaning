@@ -108,7 +108,7 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 
 			for( int i = 0; i < rl.vnames.size(); i++ )
 			{
-				output_file << rl.vnames[i];
+				output_file << rl.vnames[i] << "\t";;
 				if( i == ( rl.vnames.size() - 1 ) )
 					output_file << "align" << "\t";
 			}
@@ -149,7 +149,7 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 				{
 					for( int i = 0; i < rl.row.size(); i++ )
 					{
-						output_file << rl.row[i];
+						output_file << rl.row[i] << "\t";
 						if( i == ( rl.row.size() - 1 ) )
 							output_file << counter << "\t";
 						//else 
