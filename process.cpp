@@ -104,7 +104,6 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 			rl.session_label = findVarIndex( "RECORDING_SESSION_LABEL", rl.vnames );
 			rl.trial_start = findVarIndex( "TRIAL_START_TIME", rl.vnames );
 			rl.audio = findVarIndex( "audio", rl.vnames );
-			//std::cout << rl.trial_start << std::endl;
 			header = false;
   		}
   		else
@@ -114,7 +113,6 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 				rl.row.push_back( rl.item );
 			}
 			start_temp = rl.row[ rl.trial_start ];
-			//std::cout << start_temp << std::endl;
 
 			if( first ){
 				trial_start = rl.row[ rl.trial_start ];
@@ -123,10 +121,8 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 			}
 			else
 			{
-				//std::cout << start_temp << "   " << trial_start << std::endl;
 				if( trial_start != start_temp )
 				{
-					//std::cout << "HAHA" << std::endl;
 					trial_start = start_temp;
 					newtrial = true;
 					counter = 0;
@@ -143,16 +139,13 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 				counter += 2;
 				if( counter >=50 && counter >= extract_point )
 				{
-					//std::cout << counter << std::endl;
 					for( int i = 0; i < rl.row.size(); i++ )
 					{
 						if( i < rl.row.size() - 1 )
 							output_file << rl.row[i] << "\t";
 						else 
 							output_file << rl.row[i];
-                            //std::cout << counter << "\t";
                     }
-
 				}
 			}
 			rl.row.clear();
