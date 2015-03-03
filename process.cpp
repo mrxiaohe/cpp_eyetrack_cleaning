@@ -105,6 +105,14 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 			rl.trial_start = findVarIndex( "TRIAL_START_TIME", rl.vnames );
 			rl.audio = findVarIndex( "audio", rl.vnames );
 			header = false;
+
+			for( int i = 0; i < rl.vnames.size(); i++ )
+			{
+				output_file << rl.vnames[i];
+				if( i == ( rl.vnames.size() - 1 ) )
+					output_file << "align" << "\t";
+			}
+
   		}
   		else
   		{
@@ -141,10 +149,11 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 				{
 					for( int i = 0; i < rl.row.size(); i++ )
 					{
-						if( i < rl.row.size() - 1 )
-							output_file << rl.row[i] << "\t";
-						else 
-							output_file << rl.row[i];
+						output_file << rl.row[i];
+						if( i == ( rl.row.size() - 1 ) )
+							output_file << counter << "\t";
+						//else 
+						//	
                     }
 				}
 			}
