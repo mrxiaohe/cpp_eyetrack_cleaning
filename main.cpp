@@ -5,21 +5,26 @@
 #include <sstream>
 #include <stdlib.h>
 #include "process.h"
+#include <RcppArmadillo.h>
+
+// [[Rcpp::depends(RcppArmadillo)]]
+
+using namespace Rcpp;
+using namespace arma;
 
 
-
-
-int main(int argc, char** argv)
+RcppExport SEXP eyeProcess(SEXP DATAFILE, SEXP TIMEFILE, SEXP OUTPUTNAME, SEXP DURATION, SEXP PRIORPOINT)
 {
-	if( argc !=3 )
-	{
-		std::cout << "2 file paths needed" << std::endl;
-		return 0;
-	}
-	else{
-		process pr;
-		pr.trimmer( argv );
-		return 0;
+	BEGIN_RCPP
+	std::vector< std::string  > filenames;
+	filenames.push_back( as<std::string>(DATAFILE) );
+	filenames.push_back( as<std::string>(TIMEFILE) );
+	filenames.push_back( as<std::string>(OUTPUTNAME) );
+	filenames.push_back( as<std::string>(DURATION) );
+	filenames.push_back( as<std::string>(PRIORPOINT) );
 
-	}
+	process pr;
+	pr.trimmer( filenames );
+	return wrap(filenames);
+	END_RCPP
 }
