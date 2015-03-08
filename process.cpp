@@ -1,10 +1,13 @@
-#include <iostream>
-#include <fstream>
 #include <string>
 #include <vector>
-#include <sstream>
-#include <stdlib.h>
 #include "process.h"
+
+#include <RcppArmadillo.h>
+
+// [[Rcpp::depends(RcppArmadillo)]]
+
+using namespace Rcpp;
+using namespace arma;
 
 
 struct readline
@@ -15,6 +18,8 @@ struct readline
   std::vector< std::string > vnames;
   std::vector< std::vector< std::string > > vec;
   std::string item; 
+  double stoptime;
+  double priorpoint;
   int sample_index, sample_message, session_label, trial_start, audio;
 } ;
 
@@ -25,6 +30,7 @@ std::vector< std::vector< std::string > > process::ReadTimeFile( std::string fil
 
   	while( std::getline( rl.file, rl.line, '\r' ))
   	{
+  		R_CheckUserInterrupt();
   		std::stringstream linestream( rl.line );
   		
   		while( std::getline( linestream, rl.item, '\t'))
@@ -60,6 +66,7 @@ double process::check_start( std::string msg, std::vector< std::vector< std::str
     
     for( int i = 0; i < nrow; i++ )
     {
+    	R_CheckUserInterrupt();
         if( msg == matrix[i][0] )
             save_time = atof( matrix[i][1].c_str() ) * 1000.0;
     }
@@ -76,10 +83,14 @@ bool process::check_msg( std::string msg, int id, std::vector< std::string > &ro
     return match;
 }
 
-void process::EyeData( std::string filename, std::vector< std::vector< std::string > >& timefile )
+void process::EyeData( std::vector< std::string >& filename, std::vector< std::vector< std::string > >& timefile )
 {
 	readline rl;
-	rl.file.open( std::string( filename.c_str() ) );
+	rl.file.open( std::string( filename[0].c_str() ) );
+	std::ofstream output_file( std::string( filename[2].c_str() ) );
+	rl.stoptime = atof(filename[3].c_str() ) ;
+	rl.priorpoint = atof(filename[4].c_str() ) ;
+	//Rprintf("stoptime: %f", rl.stoptime);
 	bool header( true );
 	bool first( true );
 	bool newtrial( true );
@@ -87,10 +98,10 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 	std::string trial_start;
 	double extract_point = 0.0;
 	long counter = 0;
-	std::ofstream output_file("eyetracking_processed_file.csv");
-
+	
 	while( std::getline( rl.file, rl.line, '\r' ))
   	{
+  		R_CheckUserInterrupt();
   		std::stringstream linestream( rl.line );
   		
   		if( header )
@@ -104,13 +115,18 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 			rl.session_label = findVarIndex( "RECORDING_SESSION_LABEL", rl.vnames );
 			rl.trial_start = findVarIndex( "TRIAL_START_TIME", rl.vnames );
 			rl.audio = findVarIndex( "audio", rl.vnames );
+			std::string temp = rl.vnames[0];
+			//Rprintf("MaxIter argument   : %s \n", temp.c_str() );
+
+			//Rprintf("pts: \n", rl.sample_index);
 			header = false;
 
 			for( int i = 0; i < rl.vnames.size(); i++ )
 			{
+				R_CheckUserInterrupt();
 				output_file << rl.vnames[i] << "\t";;
 				if( i == ( rl.vnames.size() - 1 ) )
-					output_file << "align" << "\t";
+					output_file << "align";
 			}
 
   		}
@@ -120,6 +136,7 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 			{
 				rl.row.push_back( rl.item );
 			}
+			
 			start_temp = rl.row[ rl.trial_start ];
 
 			if( first ){
@@ -127,6 +144,7 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 				extract_point = check_start( rl.row[ rl.audio ], timefile );
 				first = false;
 			}
+			
 			else
 			{
 				if( trial_start != start_temp )
@@ -134,9 +152,9 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 					trial_start = start_temp;
 					newtrial = true;
 					counter = 0;
-					extract_point = check_start( rl.row[ rl.audio ], timefile );
 				}
 			}
+			
 			if( newtrial )
 			{
 				newtrial =  !check_msg( "Click_screen_start", rl.sample_message, rl.row );
@@ -145,29 +163,30 @@ void process::EyeData( std::string filename, std::vector< std::vector< std::stri
 			else
 			{
 				counter += 2;
-				if( counter >=50 && counter >= extract_point )
+				if( counter >=50 && (counter + rl.priorpoint)  >= extract_point &&
+					counter <= (extract_point + rl.stoptime ))
 				{
 					for( int i = 0; i < rl.row.size(); i++ )
 					{
 						output_file << rl.row[i] << "\t";
 						if( i == ( rl.row.size() - 1 ) )
-							output_file << counter << "\t";
-						//else 
-						//	
+							output_file << counter;
                     }
 				}
 			}
-			rl.row.clear();
+		
+		
   		}
+  		rl.row.clear();
   	}
   	rl.file.close();
   	output_file.close();
 }
 
 
-void process::trimmer( char** argv )
+void process::trimmer( std::vector< std::string > &filenames )
 {
-	std::vector< std::vector< std::string > > df = ReadTimeFile( argv[1] );
-	EyeData( argv[2], df );
+	std::vector< std::vector< std::string > > df = ReadTimeFile( filenames[1] );
+	EyeData( filenames, df );
 
 }
